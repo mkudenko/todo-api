@@ -2,11 +2,11 @@
 var express = require('express');
 var bodyParser = require('body-parser');
 var _ = require('lodash');
+var db = require('./db');
 
 var app = express();
 var PORT = process.env.PORT || 3000;
 var todos = [];
-var todoNextId = 1;
 
 app.use(bodyParser.json());
 
@@ -50,10 +50,11 @@ app.post('/todos', function (req, res) {
         return res.status(400).send();
     }
     body.description = body.description.trim();
-    body.id = todoNextId++;
-    todos.push(body);
-
-    res.json(body);
+    db.todo.create(body).then(function (todo) {
+        res.json(todo.toJSON());
+    }, function (e) {
+        res.status(400).json(e);
+    });
 });
 
 app.delete('/todos/:id', function (req, res) {
@@ -93,6 +94,9 @@ app.put('/todos/:id', function (req, res) {
     res.json(matchedTodo);
 });
 
-app.listen(PORT, function () {
-    console.log('Express listening on port ' + PORT + '!');
+db.sequelize.sync().then(function () {
+    app.listen(PORT, function () {
+        console.log('Express listening on port ' + PORT + '!');
+    });
 });
+
