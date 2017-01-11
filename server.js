@@ -35,12 +35,15 @@ app.get('/todos', function (req, res) {
 
 app.get('/todos/:id', function (req, res) {
     var todoId = parseInt(req.params.id, 10);
-    var matchedTodo = _.find(todos, {id: todoId});
-    if (typeof matchedTodo === 'undefined') {
-        return res.status(404).send();
-    } else {
-        res.json(matchedTodo);
-    }
+    db.todo.findById(todoId).then(function (todo) {
+        if (todo) {
+            res.json(todo.toJSON());
+        } else {
+            res.status(404).json({error: 'todo not found.'});
+        }
+    }, function (e) {
+        res.status(500).send();
+    });
 });
 
 app.post('/todos', function (req, res) {
